@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"gsk.com/code-orange/agents/internal/openai"
+	"gsk.com/code-orange/agents/internal/promptpipeline"
 	"gsk.com/code-orange/agents/internal/promptselector"
 )
 
@@ -18,9 +19,10 @@ type Agent struct {
 	client         *openai.Client
 	promptSelector promptselector.PromptSelector
 	logger         *log.Logger
+	Pipeline       *promptpipeline.Pipeline
 }
 
-func New(id, name, description string, promptPool []string, client *openai.Client, selector promptselector.PromptSelector, logger *log.Logger) *Agent {
+func New(id, name, description string, promptPool []string, client *openai.Client, selector promptselector.PromptSelector, logger *log.Logger, pipeline *promptpipeline.Pipeline) *Agent {
 	return &Agent{
 		id:             id,
 		name:           name,
@@ -29,6 +31,7 @@ func New(id, name, description string, promptPool []string, client *openai.Clien
 		client:         client,
 		promptSelector: selector,
 		logger:         logger,
+		Pipeline:       pipeline,
 	}
 }
 
@@ -66,4 +69,8 @@ func (a *Agent) renderPrompt(prompt string, values map[string]string) (string, e
 	}
 
 	return renderedPrompt.String(), nil
+}
+
+func (a *Agent) Execute(input string) (string, error) {
+	return a.Pipeline.Execute(a.client, input, map[string]interface{}{})
 }

@@ -7,6 +7,7 @@ import (
 
 	"gsk.com/code-orange/agents/internal/agent"
 	"gsk.com/code-orange/agents/internal/openai"
+	"gsk.com/code-orange/agents/internal/promptpipeline"
 	"gsk.com/code-orange/agents/internal/promptselector"
 )
 
@@ -21,6 +22,12 @@ func main() {
 
 	logger := log.New(logFile, "", log.LstdFlags)
 
+	pipeline := promptpipeline.NewPipeline([]promptpipeline.PromptTemplate{
+		{Name: "Initial", Template: "Analyze this: {{.Input}}"},
+		{Name: "Elaborate", Template: "Provide more details on: {{.Input}}"},
+		{Name: "Summarize", Template: "Summarize the key points: {{.Input}}"},
+	})
+
 	agent := agent.New(
 		"agent001",
 		"InfoSeeker",
@@ -33,17 +40,15 @@ func main() {
 		client,
 		*promptselector.NewPromptSelector(client),
 		logger,
+		pipeline,
 	)
 
-	response, err := agent.ProcessMessage("provide a detailed essay", map[string]string{
-		"name": "an expert in the field of genitic and cell biology",
-		"task": "everything you know about munchkin cats",
-	})
+	result, err := agent.Execute("Your initial input here")
 	if err != nil {
 		fmt.Printf("Error processing message: %v\n", err)
 		return
 	}
 
 	fmt.Println("AI Response:")
-	fmt.Println(response)
+	fmt.Println(result)
 }
